@@ -1,0 +1,43 @@
+version: '3'
+
+services:
+  loadbalancer:
+    build:
+      context: ./loadbalancer
+      dockerfile: Dockerfile
+    volumes:
+      # - ./loadbalancer/nginx-lease_conn.conf:/etc/nginx/nginx.conf
+      - ./loadbalancer/nginx-ip_hash.conf:/etc/nginx/nginx.conf
+      # - ./loadbalancer/nginx-round_robin.conf:/etc/nginx/nginx.conf
+    network_mode: "host"
+    privileged: true
+    restart: always
+    stop_grace_period: 1s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        compress: "true"
+
+  keepalived:
+    build:
+      context: ./keepalived
+      dockerfile: Dockerfile
+    volumes:
+      # Master
+      - ./keepalived/keepalived-master.conf:/etc/keepalived/keepalived.conf 
+      # Backup
+      # - ./keepalived/keepalived-backup.conf:/etc/keepalived/keepalived.conf
+    network_mode: "host"
+    privileged: true
+    restart: always
+    depends_on:
+      - loadbalancer
+    stop_grace_period: 1s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        compress: "true"
